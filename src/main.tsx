@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   CircleDashed,
   Clock3,
-  Crown,
   Download,
   ExternalLink,
   Gamepad2,
@@ -15,6 +14,7 @@ import {
   Trash2,
   Trophy,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 import type { Game, GameStatus } from "./types";
 import { fromGameRow, isSupabaseConfigured, supabase, type GameRow } from "./supabase";
@@ -125,6 +125,14 @@ function App() {
     );
   }, [baseGames, deletedGameIds, localGames]);
 
+  const heroCover = useMemo(() => {
+    const mgs3 = games.find((game) =>
+      game.title.toLowerCase().includes("metal gear solid 3"),
+    );
+
+    return mgs3?.cover || fallbackCover;
+  }, [games]);
+
   const deviceFilters = useMemo(
     () => [
       "all",
@@ -160,8 +168,8 @@ function App() {
   const stats = useMemo(
     () => ({
       total: games.length,
-      done: games.filter((game) => game.status === "done").length,
-      completed: games.filter(hasBeenCompleted).length,
+      done: games.filter((game) => game.status === "done" || hasBeenCompleted(game))
+        .length,
       playing: games.filter((game) => game.status === "playing").length,
       todo: games.filter((game) => game.status === "todo").length,
     }),
@@ -339,38 +347,40 @@ function App() {
   return (
     <main className="app-shell">
       <section className="hero">
+        <div className="hero-cover" aria-hidden="true">
+          <img src={heroCover} alt="" />
+        </div>
         <div className="hero-copy">
-          <div className="kicker">
-            <Gamepad2 size={18} aria-hidden="true" />
-            Backlog public
-          </div>
           <h1>Game Backlog</h1>
-          <p>
-            Une bibliothèque personnelle pour suivre les jeux à faire, en cours,
-            terminés ou laissés de côté.
-          </p>
         </div>
 
         <div className="stats" aria-label="Statistiques du backlog">
-          <Stat icon={Trophy} label="Total" value={stats.total} />
-          <Stat icon={CheckCircle2} label="Terminés" value={stats.done} />
-          <Stat icon={Trophy} label="Déjà terminés" value={stats.completed} />
+          <Stat icon={Gamepad2} label="Total" value={stats.total} />
+          <Stat icon={CircleDashed} label="À faire" value={stats.todo} />
+          <Stat icon={Trophy} label="Terminés" value={stats.done} />
           <Stat icon={Clock3} label="En cours" value={stats.playing} />
         </div>
       </section>
 
+      {isAdminRoute && isSupabaseConfigured ? (
+        <section className="admin-session" aria-label="Session administrateur">
+          <div>
+            <span>Admin</span>
+            <strong>{userEmail ? "Session active" : "Connexion requise"}</strong>
+          </div>
+          <AuthPanel
+            userEmail={userEmail}
+            onLogin={requestLogin}
+            onLogout={logout}
+          />
+        </section>
+      ) : null}
+
       {isAdminRoute ? (
         <section
-          className={`add-panel ${isSupabaseConfigured ? "with-auth" : ""}`}
+          className={`add-panel ${!isSupabaseConfigured ? "with-export" : ""}`}
           aria-label="Administration du backlog"
         >
-          {isSupabaseConfigured ? (
-            <AuthPanel
-              userEmail={userEmail}
-              onLogin={requestLogin}
-              onLogout={logout}
-            />
-          ) : null}
           <AddGameForm
             isDisabled={isSupabaseConfigured && !userEmail}
             isSubmitting={isMutating}
@@ -469,7 +479,7 @@ function App() {
   );
 }
 
-type IconComponent = typeof Trophy;
+type IconComponent = LucideIcon;
 
 function Stat({
   icon: Icon,
@@ -513,7 +523,7 @@ function AuthPanel({
     return (
       <div className="auth-panel">
         <span>{userEmail}</span>
-        <button type="button" onClick={onLogout}>
+        <button className="logout-button" type="button" onClick={onLogout}>
           Déconnexion
         </button>
       </div>
@@ -550,25 +560,20 @@ function AddGameForm({
 }) {
   const [title, setTitle] = useState("");
   const [support, setSupport] = useState("");
-  const [customSupport, setCustomSupport] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [customPlatform, setCustomPlatform] = useState("");
 
   function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedTitle = title.trim();
-    const gameSupport = customSupport.trim() || support;
-    const platforms = normalizePlatforms([...selectedPlatforms, customPlatform]);
+    const platforms = normalizePlatforms(selectedPlatforms);
 
     if (!trimmedTitle) {
       return;
     }
 
-    void onAdd(trimmedTitle, gameSupport, platforms);
+    void onAdd(trimmedTitle, support, platforms);
     setTitle("");
-    setCustomSupport("");
-    setCustomPlatform("");
   }
 
   return (
@@ -596,24 +601,6 @@ function AddGameForm({
             </option>
           ))}
         </select>
-      </label>
-      <label>
-        <span>Autre version</span>
-        <input
-          value={customSupport}
-          onChange={(event) => setCustomSupport(event.target.value)}
-          disabled={isDisabled || isSubmitting}
-          placeholder="Ex: Dreamcast"
-        />
-      </label>
-      <label>
-        <span>Autre appareil</span>
-        <input
-          value={customPlatform}
-          onChange={(event) => setCustomPlatform(event.target.value)}
-          disabled={isDisabled || isSubmitting}
-          placeholder="Ex: Steam Deck"
-        />
       </label>
       <PlatformPicker
         disabled={isDisabled || isSubmitting}
@@ -660,8 +647,8 @@ function GameCard({
           {statusLabels[game.status]}
         </span>
         {hasBeenCompleted(game) ? (
-          <span className="completion-crown">
-            <Crown size={17} aria-label="Terminé" />
+          <span className="completion-trophy">
+            <Trophy size={17} aria-label="Terminé" />
           </span>
         ) : null}
       </button>
@@ -739,7 +726,7 @@ function GameDialog({
           </span>
           {hasBeenCompleted(game) ? (
             <span className="completion-pill inline">
-              <Crown size={14} aria-hidden="true" />
+              <Trophy size={14} aria-hidden="true" />
               Terminé
             </span>
           ) : null}
