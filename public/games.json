@@ -1,0 +1,126 @@
+[
+  {
+    "id": "hollow-knight",
+    "title": "Hollow Knight",
+    "status": "done",
+    "support": "Switch",
+    "platform": "Switch",
+    "platforms": ["Switch"],
+    "priority": "medium",
+    "personalRating": 9,
+    "personalNote": "Terminé, superbe ambiance et progression très satisfaisante.",
+    "cover": "https://media.rawg.io/media/games/9cc/9cc11f9a1b31b8717670d6cbb74dc082.jpg",
+    "description": "Une aventure d'action en 2D dans un royaume souterrain vaste, mélancolique et exigeant.",
+    "released": "2017-02-24",
+    "genres": [
+      "Metroidvania",
+      "Action",
+      "Platformer"
+    ],
+    "developer": "Team Cherry",
+    "publisher": "Team Cherry",
+    "rawgUrl": "https://rawg.io/games/hollow-knight"
+  },
+  {
+    "id": "persona-5-royal",
+    "title": "Persona 5 Royal",
+    "status": "playing",
+    "support": "PS5",
+    "platform": "PS5",
+    "platforms": ["PS5"],
+    "priority": "high",
+    "personalRating": null,
+    "personalNote": "En cours. À reprendre quand j'ai envie d'un gros JRPG.",
+    "cover": "https://media.rawg.io/media/games/b77/b778c77268d6f7f452b8bef7728a3e82.jpg",
+    "description": "Un JRPG stylé autour d'un groupe de lycéens qui explorent des palais psychologiques.",
+    "released": "2019-10-31",
+    "genres": [
+      "JRPG",
+      "Adventure"
+    ],
+    "developer": "Atlus",
+    "publisher": "SEGA",
+    "rawgUrl": "https://rawg.io/games/persona-5-royal"
+  },
+  {
+    "id": "outer-wilds",
+    "title": "Outer Wilds",
+    "status": "todo",
+    "support": "PC",
+    "platform": "PC",
+    "platforms": ["PC"],
+    "priority": "high",
+    "personalRating": null,
+    "personalNote": "À faire sans spoiler, probablement en priorité.",
+    "cover": "https://media.rawg.io/media/games/4dd/4dd2b8537f4cf04fda3b60855267d72f.jpg",
+    "description": "Une exploration spatiale en boucle temporelle, centrée sur la curiosité et la découverte.",
+    "released": "2019-05-28",
+    "genres": [
+      "Adventure",
+      "Puzzle",
+      "Exploration"
+    ],
+    "developer": "Mobius Digital",
+    "publisher": "Annapurna Interactive",
+    "rawgUrl": "https://rawg.io/games/outer-wilds"
+  },
+  {
+    "id": "elden-ring",
+    "title": "Elden Ring",
+    "status": "todo",
+    "support": "PC",
+    "platform": "PC",
+    "platforms": ["PC"],
+    "priority": "medium",
+    "personalRating": null,
+    "personalNote": "Très bon, mais mis en pause après une grosse session.",
+    "cover": "https://media.rawg.io/media/games/ccf/ccf26f6e3d553a04f0033a8107a521b8.jpg",
+    "description": "Un action-RPG en monde ouvert, sombre et immense, conçu par FromSoftware.",
+    "released": "2022-02-25",
+    "genres": [
+      "Action RPG",
+      "Open World"
+    ],
+    "developer": "FromSoftware",
+    "publisher": "Bandai Namco Entertainment",
+    "rawgUrl": "https://rawg.io/games/elden-ring"
+  },
+  {
+    "id": "disco-elysium",
+    "title": "Disco Elysium",
+    "status": "todo",
+    "support": "PC",
+    "platform": "PC",
+    "platforms": ["PC"],
+    "priority": "low",
+    "personalRating": null,
+    "personalNote": "À reprendre plus tard, je veux lui redonner une chance.",
+    "cover": "https://media.rawg.io/media/games/2ee/2eeed8524931b4fae1e4a40d0e5443b5.jpg",
+    "description": "Un RPG narratif policier porté par l'écriture, les choix et les voix intérieures du personnage.",
+    "released": "2019-10-15",
+    "genres": [
+      "RPG",
+      "Narrative"
+    ],
+    "developer": "ZA/UM",
+    "publisher": "ZA/UM",
+    "rawgUrl": "https://rawg.io/games/disco-elysium"
+  },
+  {
+    "id": "local-final-fantasy-7-1788542967451",
+    "title": "final fantasy 7",
+    "status": "todo",
+    "support": "PS1",
+    "platform": "PS1",
+    "platforms": ["Retroid Pocket Flip 2"],
+    "priority": "medium",
+    "personalRating": null,
+    "personalNote": "Ajouté depuis l'app. À enrichir avec RAWG lors du prochain export.",
+    "cover": "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    "description": "Jeu ajouté manuellement, en attente d'enrichissement.",
+    "released": "",
+    "genres": [],
+    "developer": "Inconnu",
+    "publisher": "Inconnu"
+  }
+]
