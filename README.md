@@ -1,4 +1,4 @@
-# Game Backlog
+# Game Backlog 
 
 MVP statique pour publier un backlog de jeux vidéo sur GitHub Pages.
 
