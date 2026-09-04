@@ -22,7 +22,6 @@ import "./styles.css";
 
 const LOCAL_GAMES_KEY = "game-backlog.local-games";
 const DELETED_GAMES_KEY = "game-backlog.deleted-games";
-const authRedirectUrl = import.meta.env.VITE_AUTH_REDIRECT_URL as string | undefined;
 const fallbackCover =
   "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80";
 
@@ -315,21 +314,17 @@ function App() {
     setSelectedGame((currentGame) => (currentGame?.id === game.id ? null : currentGame));
   }
 
-  async function requestLogin(email: string) {
+  async function requestLogin(email: string, password: string) {
     if (!supabase) {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: getAuthRedirectUrl(),
-      },
+      password,
     });
 
-    setStatusMessage(
-      error ? error.message : "Lien de connexion envoyé. Vérifie ta boîte mail.",
-    );
+    setStatusMessage(error ? error.message : "Connecté.");
   }
 
   async function logout() {
@@ -500,16 +495,17 @@ function AuthPanel({
   onLogout,
 }: {
   userEmail: string | null;
-  onLogin: (email: string) => void;
+  onLogin: (email: string, password: string) => void;
   onLogout: () => void;
 }) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (email.trim()) {
-      onLogin(email.trim());
+    if (email.trim() && password) {
+      onLogin(email.trim(), password);
     }
   }
 
@@ -531,6 +527,12 @@ function AuthPanel({
         onChange={(event) => setEmail(event.target.value)}
         placeholder="Email admin"
         type="email"
+      />
+      <input
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        placeholder="Mot de passe"
+        type="password"
       />
       <button type="submit">Connexion</button>
     </form>
@@ -1017,10 +1019,6 @@ function slugify(value: string) {
 
 function getCurrentRoute() {
   return window.location.hash.replace("#/", "") === "admin" ? "admin" : "public";
-}
-
-function getAuthRedirectUrl() {
-  return authRedirectUrl || `${window.location.origin}${window.location.pathname}#/admin`;
 }
 
 createRoot(document.getElementById("root")!).render(

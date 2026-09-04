@@ -109,7 +109,6 @@ npx supabase functions deploy add-game
 ```text
 VITE_SUPABASE_URL=https://ton-projet.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=ta_cle_publishable_public
-VITE_AUTH_REDIRECT_URL=https://ton-user.github.io/ton-repo/#/admin
 ```
 
 9. Pour importer le `public/games.json` actuel dans Supabase :
@@ -131,13 +130,8 @@ source de vérité.
 Sur GitHub Pages, utilise `https://ton-user.github.io/ton-repo/#/admin` pour
 ouvrir l'interface admin. Le hash évite les 404 au rechargement.
 
-Dans Supabase, va aussi dans `Authentication` > `URL Configuration` :
-
-- `Site URL` : `https://ton-user.github.io/ton-repo/`
-- `Redirect URLs` :
-  - `https://ton-user.github.io/ton-repo/#/admin`
-  - `http://127.0.0.1:5173/#/admin`
-  - `http://127.0.0.1:5174/#/admin`
+L'admin utilise une connexion email + mot de passe Supabase, donc tu n'as pas
+besoin de configurer de magic link pour le flux principal.
 
 ### Migrations
 

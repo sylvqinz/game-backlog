@@ -121,7 +121,7 @@ h1 {
 }
 
 .add-panel.with-auth {
-  grid-template-columns: minmax(170px, 250px) minmax(0, 1fr);
+  grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
 }
 
 .auth-panel {
