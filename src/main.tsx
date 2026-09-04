@@ -22,6 +22,7 @@ import "./styles.css";
 
 const LOCAL_GAMES_KEY = "game-backlog.local-games";
 const DELETED_GAMES_KEY = "game-backlog.deleted-games";
+const authRedirectUrl = import.meta.env.VITE_AUTH_REDIRECT_URL as string | undefined;
 const fallbackCover =
   "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80";
 
@@ -322,7 +323,7 @@ function App() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.href,
+        emailRedirectTo: getAuthRedirectUrl(),
       },
     });
 
@@ -1016,6 +1017,10 @@ function slugify(value: string) {
 
 function getCurrentRoute() {
   return window.location.hash.replace("#/", "") === "admin" ? "admin" : "public";
+}
+
+function getAuthRedirectUrl() {
+  return authRedirectUrl || `${window.location.origin}${window.location.pathname}#/admin`;
 }
 
 createRoot(document.getElementById("root")!).render(
