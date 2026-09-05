@@ -145,7 +145,7 @@ function App() {
     const normalizedQuery = query.trim().toLowerCase();
 
     return games.filter((game) => {
-      const matchesStatus = activeStatus === "all" || game.status === activeStatus;
+      const matchesStatus = matchesGameStatusFilter(game, activeStatus);
       const matchesPlatform =
         platform === "all" || getGameDevices(game).includes(platform);
       const searchable = [
@@ -627,6 +627,7 @@ function GameCard({
   onSelect: () => void;
 }) {
   const StatusIcon = statusIcons[game.status];
+  const statusLabel = getDisplayStatusLabel(game);
 
   return (
     <article className="game-card">
@@ -644,7 +645,7 @@ function GameCard({
         <img src={game.cover} alt="" loading="lazy" />
         <span className={`status-pill ${game.status}`}>
           <StatusIcon size={15} aria-hidden="true" />
-          {statusLabels[game.status]}
+          {statusLabel}
         </span>
         {hasBeenCompleted(game) ? (
           <span className="completion-trophy">
@@ -682,6 +683,7 @@ function GameDialog({
   onSave: (game: Game) => Promise<void>;
 }) {
   const StatusIcon = statusIcons[game.status];
+  const statusLabel = getDisplayStatusLabel(game);
   const [draft, setDraft] = useState<Game>(() => ({
     ...game,
     platforms: getGameDevices(game),
@@ -722,7 +724,7 @@ function GameDialog({
         <div className="dialog-content">
           <span className={`status-pill ${game.status}`}>
             <StatusIcon size={15} aria-hidden="true" />
-            {statusLabels[game.status]}
+            {statusLabel}
           </span>
           {hasBeenCompleted(game) ? (
             <span className="completion-pill inline">
@@ -879,6 +881,26 @@ function formatDate(value: string) {
     month: "long",
     day: "numeric",
   }).format(new Date(`${value}T00:00:00`));
+}
+
+function matchesGameStatusFilter(game: Game, status: GameStatus | "all") {
+  if (status === "all") {
+    return true;
+  }
+
+  if (status === "done") {
+    return game.status === "done" || hasBeenCompleted(game);
+  }
+
+  return game.status === status;
+}
+
+function getDisplayStatusLabel(game: Game) {
+  if (game.status === "todo" && hasBeenCompleted(game)) {
+    return "À refaire";
+  }
+
+  return statusLabels[game.status];
 }
 
 function readLocalGames() {
