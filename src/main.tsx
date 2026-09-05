@@ -658,8 +658,8 @@ function GameCard({
           <p>{game.description}</p>
         </div>
         <div className="meta-row">
-          {getGameSupport(game) ? <span>Version {getGameSupport(game)}</span> : null}
-          {getGameDevices(game).length ? <span>{formatDevices(game)}</span> : null}
+          {getGameSupport(game) ? <span>{getGameSupport(game)}</span> : null}
+          {getGameDevices(game).length ? <span>Sur {formatDevices(game)}</span> : null}
         </div>
       </div>
     </article>
@@ -762,7 +762,7 @@ function GameDialog({
                         <option key={status} value={status}>
                           {statusLabels[status]}
                         </option>
-                      ))}
+                    ))}
                   </select>
                 </label>
                 <label>
@@ -775,7 +775,7 @@ function GameDialog({
                   />
                 </label>
               </div>
-              <span className="edit-caption">Console</span>
+              <span className="edit-caption">Sur</span>
               <PlatformPicker
                 selectedPlatforms={getGameDevices(draft)}
                 onChange={(platforms) =>
@@ -817,7 +817,7 @@ function GameDialog({
                 <dd>{getGameSupport(game) || "Non définie"}</dd>
               </div>
               <div>
-                <dt>Console</dt>
+                <dt>Sur</dt>
                 <dd>{getGameDevices(game).length ? formatDevices(game) : "Non défini"}</dd>
               </div>
               <div>
@@ -944,8 +944,10 @@ function PlatformPicker({
 
 function getGameDevices(game: Game) {
   const support = getGameSupport(game);
+  const rawDevices =
+    game.platforms?.length || game.platform !== support ? [game.platform] : [];
   const devices = normalizePlatforms(
-    game.platforms?.length ? game.platforms : [game.platform],
+    game.platforms?.length ? game.platforms : rawDevices,
   ).map((device) => deviceAliases[device] || device);
 
   return devices.filter(
