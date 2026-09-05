@@ -80,7 +80,8 @@ npx supabase link --project-ref ton-project-ref
 npx supabase db push --linked
 ```
 
-4. Ajoute ton email admin sans passer par le SQL Editor :
+4. Crée ton compte admin dans Supabase Auth, puis ajoute-le à la table
+   `admins` sans passer par le SQL Editor :
 
 ```bash
 SUPABASE_URL=https://ton-projet.supabase.co \
@@ -89,14 +90,19 @@ ADMIN_EMAIL=toi@example.com \
 npm run admin:add
 ```
 
-5. Dans `Authentication` > `Providers`, active Email avec magic links.
+5. Dans `Authentication` > `Providers`, active Email avec mot de passe.
+   Pour garder l'admin privé, désactive aussi les inscriptions publiques
+   une fois ton compte créé.
 6. Dans les secrets de l'Edge Function, ajoute :
 
 ```text
 RAWG_API_KEY=ta_cle_rawg
-ADMIN_EMAIL=toi@example.com
 SUPABASE_SECRET_KEY=ta_cle_secret_backend
+ALLOWED_ORIGIN=https://ton-user.github.io
 ```
+
+Tu peux autoriser plusieurs origines en les séparant par des virgules, par
+exemple `https://ton-user.github.io,http://localhost:5173`.
 
 7. Déploie l'Edge Function :
 

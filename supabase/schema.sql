@@ -35,8 +35,12 @@ alter table public.games add constraint games_status_check
 check (status in ('todo', 'playing', 'done'));
 
 create table if not exists public.admins (
-  email text primary key
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email text not null
 );
+
+create unique index if not exists admins_email_unique
+on public.admins (lower(email));
 
 alter table public.games enable row level security;
 alter table public.admins enable row level security;
@@ -45,7 +49,7 @@ drop policy if exists "Admins can read admins" on public.admins;
 create policy "Admins can read admins"
 on public.admins for select
 to authenticated
-using ((auth.jwt() ->> 'email') = email);
+using (user_id = auth.uid());
 
 drop policy if exists "Anyone can read games" on public.games;
 create policy "Anyone can read games"
@@ -59,7 +63,7 @@ to authenticated
 with check (
   exists (
     select 1 from public.admins
-    where admins.email = (auth.jwt() ->> 'email')
+    where admins.user_id = auth.uid()
   )
 );
 
@@ -70,13 +74,13 @@ to authenticated
 using (
   exists (
     select 1 from public.admins
-    where admins.email = (auth.jwt() ->> 'email')
+    where admins.user_id = auth.uid()
   )
 )
 with check (
   exists (
     select 1 from public.admins
-    where admins.email = (auth.jwt() ->> 'email')
+    where admins.user_id = auth.uid()
   )
 );
 
@@ -87,9 +91,10 @@ to authenticated
 using (
   exists (
     select 1 from public.admins
-    where admins.email = (auth.jwt() ->> 'email')
+    where admins.user_id = auth.uid()
   )
 );
 
 -- Remplace l'adresse puis lance la ligne une fois dans l'éditeur SQL Supabase.
--- insert into public.admins (email) values ('toi@example.com');
+-- insert into public.admins (user_id, email)
+-- select id, email from auth.users where email = 'toi@example.com';
