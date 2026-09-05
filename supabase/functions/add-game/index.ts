@@ -5,6 +5,8 @@ type AddGamePayload = {
   support?: string;
   platform?: string;
   platforms?: string[];
+  status?: "todo" | "playing" | "done";
+  completedOnce?: boolean;
 };
 
 const fallbackCover =
@@ -63,6 +65,8 @@ Deno.serve(async (request) => {
   const platforms = normalizePlatforms(payload.platforms, payload.platform);
   const support = payload.support?.trim() || "";
   const platform = platforms[0] || support || "Non défini";
+  const status = normalizeStatus(payload.status);
+  const completedOnce = status === "done" || Boolean(payload.completedOnce);
 
   if (!title) {
     return json({ error: "Title is required" }, 400, corsHeaders);
@@ -72,8 +76,8 @@ Deno.serve(async (request) => {
   const game = {
     id: `${slugify(rawgGame?.slug || title)}-${Date.now()}`,
     title,
-    status: "todo",
-    completed_once: false,
+    status,
+    completed_once: completedOnce,
     support,
     platform,
     platforms,
@@ -185,6 +189,10 @@ function slugify(value: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function normalizeStatus(status?: AddGamePayload["status"]) {
+  return status === "playing" || status === "done" ? status : "todo";
 }
 
 function normalizePlatforms(platforms?: string[], legacyPlatform?: string) {

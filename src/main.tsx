@@ -28,7 +28,7 @@ const fallbackCover =
 const statusLabels: Record<GameStatus, string> = {
   todo: "À faire",
   playing: "En cours",
-  done: "Terminés",
+  done: "Terminé",
 };
 
 const statusIcons = {
@@ -136,7 +136,16 @@ function App() {
   const deviceFilters = useMemo(
     () => [
       "all",
-      ...Array.from(new Set(games.flatMap((game) => getGameDevices(game)))).sort(),
+      ...Array.from(
+        new Set(
+          games.flatMap((game) => [
+            getGameSupport(game),
+            ...getGameDevices(game),
+          ]),
+        ),
+      )
+        .filter(Boolean)
+        .sort(),
     ],
     [games],
   );
@@ -147,7 +156,9 @@ function App() {
     return games.filter((game) => {
       const matchesStatus = matchesGameStatusFilter(game, activeStatus);
       const matchesPlatform =
-        platform === "all" || getGameDevices(game).includes(platform);
+        platform === "all" ||
+        getGameSupport(game) === platform ||
+        getGameDevices(game).includes(platform);
       const searchable = [
         game.title,
         getGameSupport(game),
@@ -198,13 +209,22 @@ function App() {
     setLoadError(false);
   }
 
-  async function addTodoGame(title: string, support: string, gameDevices: string[]) {
+  async function addTodoGame(
+    title: string,
+    support: string,
+    gameDevices: string[],
+    status: GameStatus,
+    completedOnce: boolean,
+  ) {
+    const nextCompletedOnce = status === "done" || completedOnce;
+    const nextActiveStatus = nextCompletedOnce ? "done" : status;
+
     if (supabase) {
       setIsMutating(true);
       setStatusMessage("Recherche RAWG en cours...");
 
       const { data, error } = await supabase.functions.invoke("add-game", {
-        body: { title, support, platforms: gameDevices },
+        body: { title, support, platforms: gameDevices, status, completedOnce: nextCompletedOnce },
       });
 
       setIsMutating(false);
@@ -214,8 +234,27 @@ function App() {
         return;
       }
 
-      setBaseGames((currentGames) => [fromGameRow(data.game as GameRow), ...currentGames]);
-      setActiveStatus("todo");
+      const addedGame = {
+        ...fromGameRow(data.game as GameRow),
+        status,
+        completedOnce: nextCompletedOnce,
+      };
+
+      const { error: syncError } = await supabase
+        .from("games")
+        .update({
+          status,
+          completed_once: nextCompletedOnce,
+        })
+        .eq("id", addedGame.id);
+
+      if (syncError) {
+        setStatusMessage(syncError.message);
+        return;
+      }
+
+      setBaseGames((currentGames) => [addedGame, ...currentGames]);
+      setActiveStatus(nextActiveStatus);
       setPlatform(gameDevices[0] || "all");
       setStatusMessage("Jeu ajouté et enrichi.");
       return;
@@ -224,8 +263,8 @@ function App() {
     const game: Game = {
       id: `local-${slugify(title)}-${Date.now()}`,
       title,
-      status: "todo",
-      completedOnce: false,
+      status,
+      completedOnce: nextCompletedOnce,
       support,
       platform: gameDevices[0] || support || "Non défini",
       platforms: gameDevices,
@@ -241,7 +280,7 @@ function App() {
     };
 
     setLocalGames((currentGames) => [game, ...currentGames]);
-    setActiveStatus("todo");
+    setActiveStatus(nextActiveStatus);
     setPlatform(gameDevices[0] || "all");
   }
 
@@ -357,7 +396,7 @@ function App() {
         <div className="stats" aria-label="Statistiques du backlog">
           <Stat icon={Gamepad2} label="Total" value={stats.total} />
           <Stat icon={CircleDashed} label="À faire" value={stats.todo} />
-          <Stat icon={Trophy} label="Terminés" value={stats.done} />
+          <Stat icon={Trophy} label="Terminé" value={stats.done} />
           <Stat icon={Clock3} label="En cours" value={stats.playing} />
         </div>
       </section>
@@ -424,11 +463,11 @@ function App() {
         </div>
 
         <label className="select-field">
-          <span>Console</span>
+          <span>Support</span>
           <select value={platform} onChange={(event) => setPlatform(event.target.value)}>
             {deviceFilters.map((platformName) => (
               <option key={platformName} value={platformName}>
-                {platformName === "all" ? "Toutes" : platformName}
+                {platformName === "all" ? "Tous" : platformName}
               </option>
             ))}
           </select>
@@ -556,11 +595,20 @@ function AddGameForm({
 }: {
   isDisabled: boolean;
   isSubmitting: boolean;
-  onAdd: (title: string, support: string, platforms: string[]) => Promise<void>;
+  onAdd: (
+    title: string,
+    support: string,
+    platforms: string[],
+    status: GameStatus,
+    completedOnce: boolean,
+  ) => Promise<void>;
 }) {
   const [title, setTitle] = useState("");
   const [support, setSupport] = useState("");
+  const [status, setStatus] = useState<GameStatus>("todo");
+  const [completedOnce, setCompletedOnce] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const isCompletedOnceChecked = status === "done" || completedOnce;
 
   function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -572,8 +620,10 @@ function AddGameForm({
       return;
     }
 
-    void onAdd(trimmedTitle, support, platforms);
+    void onAdd(trimmedTitle, support, platforms, status, isCompletedOnceChecked);
     setTitle("");
+    setStatus("todo");
+    setCompletedOnce(false);
   }
 
   return (
@@ -601,6 +651,41 @@ function AddGameForm({
             </option>
           ))}
         </select>
+      </label>
+      <label>
+        <span>Statut</span>
+        <select
+          value={status}
+          onChange={(event) => {
+            const nextStatus = event.target.value as GameStatus;
+            setStatus(nextStatus);
+            setCompletedOnce(nextStatus === "done" || completedOnce);
+          }}
+          disabled={isDisabled || isSubmitting}
+        >
+          {allStatuses
+            .filter((currentStatus) => currentStatus !== "all")
+            .map((currentStatus) => (
+              <option key={currentStatus} value={currentStatus}>
+                {statusLabels[currentStatus]}
+              </option>
+            ))}
+        </select>
+      </label>
+      <label className="add-completed-toggle">
+        <input
+          checked={isCompletedOnceChecked}
+          disabled={isDisabled || isSubmitting}
+          type="checkbox"
+          onChange={(event) => {
+            setCompletedOnce(event.target.checked);
+
+            if (!event.target.checked && status === "done") {
+              setStatus("todo");
+            }
+          }}
+        />
+        <span>Déjà terminé</span>
       </label>
       <PlatformPicker
         disabled={isDisabled || isSubmitting}
