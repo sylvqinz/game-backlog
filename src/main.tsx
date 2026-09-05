@@ -944,10 +944,10 @@ function PlatformPicker({
 
 function getGameDevices(game: Game) {
   const support = getGameSupport(game);
-  const rawDevices =
-    game.platforms?.length || game.platform !== support ? [game.platform] : [];
+  const explicitDevices = game.platforms?.length ? game.platforms : [];
+  const legacyDevices = game.platform && game.platform !== support ? [game.platform] : [];
   const devices = normalizePlatforms(
-    game.platforms?.length ? game.platforms : rawDevices,
+    explicitDevices.length ? explicitDevices : legacyDevices,
   ).map((device) => deviceAliases[device] || device);
 
   return devices.filter(

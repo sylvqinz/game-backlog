@@ -7,37 +7,33 @@ type AddGamePayload = {
   platforms?: string[];
 };
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
 const fallbackCover =
   "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80";
+const defaultAllowedOrigin = "https://sylvqinz.github.io";
 
 Deno.serve(async (request) => {
+  const corsHeaders = getCorsHeaders(request);
+
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+    return json({ error: "Method not allowed" }, 405, corsHeaders);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const secretKey = Deno.env.get("SUPABASE_SECRET_KEY") ||
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const rawgApiKey = Deno.env.get("RAWG_API_KEY");
-  const adminEmail = Deno.env.get("ADMIN_EMAIL");
 
-  if (!supabaseUrl || !secretKey || !rawgApiKey || !adminEmail) {
-    return json({ error: "Missing server configuration" }, 500);
+  if (!supabaseUrl || !secretKey || !rawgApiKey) {
+    return json({ error: "Missing server configuration" }, 500, corsHeaders);
   }
 
   const authHeader = request.headers.get("Authorization");
   if (!authHeader) {
-    return json({ error: "Authentication required" }, 401);
+    return json({ error: "Authentication required" }, 401, corsHeaders);
   }
 
   const supabase = createClient(supabaseUrl, secretKey);
@@ -45,11 +41,21 @@ Deno.serve(async (request) => {
   const { data: userData, error: userError } = await supabase.auth.getUser(token);
 
   if (userError || !userData.user?.email) {
-    return json({ error: "Invalid session" }, 401);
+    return json({ error: "Invalid session" }, 401, corsHeaders);
   }
 
-  if (userData.user.email !== adminEmail) {
-    return json({ error: "Admin access required" }, 403);
+  const { data: adminRow, error: adminError } = await supabase
+    .from("admins")
+    .select("user_id")
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+
+  if (adminError) {
+    return json({ error: adminError.message }, 500, corsHeaders);
+  }
+
+  if (!adminRow) {
+    return json({ error: "Admin access required" }, 403, corsHeaders);
   }
 
   const payload = (await request.json()) as AddGamePayload;
@@ -59,7 +65,7 @@ Deno.serve(async (request) => {
   const platform = platforms[0] || support || "Non défini";
 
   if (!title) {
-    return json({ error: "Title is required" }, 400);
+    return json({ error: "Title is required" }, 400, corsHeaders);
   }
 
   const rawgGame = await findRawgGame(title, rawgApiKey);
@@ -91,10 +97,10 @@ Deno.serve(async (request) => {
   const { data, error } = await supabase.from("games").insert(game).select().single();
 
   if (error) {
-    return json({ error: error.message }, 500);
+    return json({ error: error.message }, 500, corsHeaders);
   }
 
-  return json({ game: data }, 200);
+  return json({ game: data }, 200, corsHeaders);
 });
 
 async function findRawgGame(title: string, apiKey: string) {
@@ -137,7 +143,25 @@ async function findRawgGame(title: string, apiKey: string) {
   };
 }
 
-function json(body: unknown, status = 200) {
+function getCorsHeaders(request: Request) {
+  const origin = request.headers.get("Origin");
+  const allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") || defaultAllowedOrigin)
+    .split(",")
+    .map((allowedOrigin) => allowedOrigin.trim())
+    .filter(Boolean);
+  const responseOrigin = origin && allowedOrigins.includes(origin)
+    ? origin
+    : allowedOrigins[0] || defaultAllowedOrigin;
+
+  return {
+    "Access-Control-Allow-Origin": responseOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+
+function json(body: unknown, status: number, corsHeaders: Record<string, string>) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {

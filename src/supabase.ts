@@ -41,7 +41,7 @@ export function fromGameRow(row: GameRow): Game {
     completedOnce: Boolean(row.completed_once),
     support: normalizeOptionalValue(row.support),
     platform: row.platform,
-    platforms: row.platforms?.length ? row.platforms : [row.platform],
+    platforms: row.platforms ?? [],
     priority: row.priority,
     personalRating: row.personal_rating,
     personalNote: row.personal_note,
